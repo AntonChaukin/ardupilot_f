@@ -22,6 +22,8 @@ local TABLE_KEY = 51
 local TABLE_PREFIX = "VTX_"
 local LOOP_INTERVAL = 200
 local VTX_FREQ = "VTX_FREQ"
+local VTX_BAND = "VTX_BAND"
+local VTX_CHANNEL = "VTX_CHANNEL"
 local VTX_POWER = "VTX_POWER"
 local RC_RANGE = 1025
 local CH_RC_channel = nil
@@ -30,40 +32,46 @@ local prev_CH_RC_channel_value = 0
 local PWR_RC_channel = nil
 local PWR_RC_channel_value = 0
 local prev_PWR_RC_channel_value = 0
-local prev_freq = 0
 local pwr_value = 25
 local range_step = 0
 local lower_bound = 0
 local upper_bound = 0
-local is_init_vtx_freq = false
+local freq = 0
+local BAND = 0
+local CHANNEL = 0
+local is_init_channels = false
 local is_add_param_table = false
 local is_enable = false
 local is_init_CH_RC_channel = false
 local is_init_PWR_RC_channel = false
 local is_init_boundaries = false
-local is_init_range = false
 local is_power_range = false
 local is_init = false
 local count = 0
-local frequencies = {}
+local control_band = {}
 local boundaries = {}
 local pwr_ranges = {}
+local band_names = {"A","B","E","F","R","L","1G3_A","1G3_B","X","3G3_A","3G3_B"}
 local PARAMS = {
 	CHANGE_ENABLE = "CHANGE_EN",
 	CHANNEL_RC = "CHANNEL_RC",
 	POWER_RC = "POWER_RC",
 	MIN_POWER = "MIN_POWER",
 	TRIM_POWER = "TRIM_POWER",
-	FREQS = {
-		"FREQ1",
-		"FREQ2",
-		"FREQ3",
-		"FREQ4",
-		"FREQ5",
-		"FREQ6",
-		"FREQ7",
-		"FREQ8"
-	}
+	CONTROL1 = "CONTROL1",
+}
+local VIDEO_CHANNELS = {
+    { 5865, 5845, 5825, 5805, 5785, 5765, 5745, 5725}, -- Band A
+    { 5733, 5752, 5771, 5790, 5809, 5828, 5847, 5866}, -- Band B 
+    { 5705, 5685, 5665, 5645, 5885, 5905, 5925, 5945}, -- Band E 
+    { 5740, 5760, 5780, 5800, 5820, 5840, 5860, 5880}, -- Airwave 
+    { 5658, 5695, 5732, 5769, 5806, 5843, 5880, 5917}, -- Race
+    { 5621, 5584, 5547, 5510, 5473, 5436, 5399, 5362}, -- LO Race
+    { 1080, 1120, 1160, 1200, 1240, 1280, 1320, 1360}, -- Band 1G3_A
+    { 1080, 1120, 1160, 1200, 1258, 1280, 1320, 1360}, -- Band 1G3_B
+    { 4990, 5020, 5050, 5080, 5110, 5140, 5170, 5200}, -- Band X
+    { 3330, 3350, 3370, 3390, 3410, 3430, 3450, 3470}, -- Band 3G3_A
+    { 3170, 3190, 3210, 3230, 3250, 3270, 3290, 3310}  -- Band 3G3_B
 }
 -- var END --
 
@@ -74,17 +82,24 @@ local function loop()
 
 	if prev_CH_RC_channel_value ~= CH_RC_channel_value then
 		prev_CH_RC_channel_value = CH_RC_channel_value
-		for i, freq in ipairs(frequencies) do
-			local lower_b = boundaries[i].lower
-			local upper_b = boundaries[i].upper
+		for _, val in ipairs(boundaries) do
 
-			if CH_RC_channel_value > lower_b and CH_RC_channel_value <= upper_b then
-				if freq ~= prev_freq then
-					gcs:send_text(6, "Current VTX freq: " .. freq)
-					prev_freq = freq
-					param:set(VTX_FREQ, freq)
-					break
+			if CH_RC_channel_value > val.lower and CH_RC_channel_value <= val.upper then
+				if val.band ~= BAND then
+					BAND = val.band
 				end
+                
+                if val.channel ~= CHANNEL then
+					CHANNEL = val.channel
+				end
+
+                freq = VIDEO_CHANNELS[BAND][CHANNEL]
+                local curr_freq = param:get(TABLE_PREFIX .. VTX_FREQ)
+                if curr_freq ~= freq then
+                    gcs:send_text(6, "Current VTX CHANNEL: " .. band_names[BAND] .. CHANNEL)
+                    param:set(VTX_FREQ, freq)
+                    break
+                end
 			end
 		end
 	end
@@ -119,20 +134,13 @@ local function init()
 		gcs:send_text(6, "0 : Initialize VTX control")
 		gcs:send_text(6, " ")
 
-		assert(param:add_table(TABLE_KEY, TABLE_PREFIX, 13), "The parameter table wasn`t created")
+		assert(param:add_table(TABLE_KEY, TABLE_PREFIX, 6), "The parameter table wasn`t created")
 		param:add_param(TABLE_KEY, 1, PARAMS.CHANGE_ENABLE, 0)
 		param:add_param(TABLE_KEY, 2, PARAMS.CHANNEL_RC, 0)
 		param:add_param(TABLE_KEY, 3, PARAMS.POWER_RC, 0)
 		param:add_param(TABLE_KEY, 4, PARAMS.MIN_POWER, 0)
 		param:add_param(TABLE_KEY, 5, PARAMS.TRIM_POWER, 0)
-		param:add_param(TABLE_KEY, 6, PARAMS.FREQS[1], 0)
-		param:add_param(TABLE_KEY, 7, PARAMS.FREQS[2], 0)
-		param:add_param(TABLE_KEY, 8, PARAMS.FREQS[3], 0)
-		param:add_param(TABLE_KEY, 9, PARAMS.FREQS[4], 0)
-		param:add_param(TABLE_KEY, 10, PARAMS.FREQS[5], 0)
-		param:add_param(TABLE_KEY, 11, PARAMS.FREQS[6], 0)
-		param:add_param(TABLE_KEY, 12, PARAMS.FREQS[7], 0)
-		param:add_param(TABLE_KEY, 13, PARAMS.FREQS[8], 0)
+		param:add_param(TABLE_KEY, 6, PARAMS.CONTROL1, 0)
 
 		is_add_param_table = true
 
@@ -158,19 +166,6 @@ local function init()
 			return
 		end
 		return init, 100
-	end
-
-	-- set init freq
-	if (is_add_param_table and is_enable) and not is_init_vtx_freq then
-		local init_freq = param:get(TABLE_PREFIX .. PARAMS.FREQS[1]) or 0
-		if init_freq > 0 then
-			gcs:send_text(6, "2 : Set init freq ... " .. init_freq)
-			param:set(VTX_FREQ, init_freq)
-			is_init_vtx_freq = true
-			gcs:send_text(6, "2 : Done! ")
-			gcs:send_text(6, " ")
-			return init, 100
-		end
 	end
 
 	-- set CHANNEL RC channel
@@ -201,38 +196,43 @@ local function init()
 		gcs:send_text(6, " ")
 	end
 
-	-- set CHANNEL RC range
-	if is_init_CH_RC_channel and not is_init_range then
-		gcs:send_text(6, "5 : Set CHANNEL RC range ... ")
-		for _, paramName in ipairs(PARAMS.FREQS) do
-			local freq = param:get(TABLE_PREFIX .. paramName) or 0
-			if freq > 1 then
-				table.insert(frequencies, freq)
-			end
-		end
-
-		if #frequencies ~= 0 then
-			range_step = RC_RANGE / #frequencies
-			gcs:send_text(6, "5 : Done!")
-			gcs:send_text(6, " ")
-			is_init_range = true
-			return init, 100
-		end
-
-		gcs:send_text(6, "5 : VTX  FREQS not found! ")
-	end
+    -- set CHANNEL table
+    if is_enable and not is_init_channels then
+        gcs:send_text(6, "5 : Set CHANNEL table ... ")
+        local control1 = param:get(TABLE_PREFIX .. PARAMS.CONTROL1) or 0
+        local control1_string = tostring(control1)
+        local index = 0
+        
+        for i = 1, #control1_string, 2 do
+           local band = tonumber(control1_string:sub(i,i)) 
+           local channel = tonumber(control1_string:sub(i,i))
+           if channel then
+              table.insert(control_band, {band = band, channel = channel}) 
+           end
+        end
+    
+        if #control_band ~= 0 then
+            gcs:send_text(6, "5 : Done!")
+            gcs:send_text(6, " ")
+            is_init_channels = true
+            return init, 100
+        end
+    
+        gcs:send_text(6, "5 : VTX  CHANNELS not found! ")
+    end
 
 	-- create boundaries table
-	if is_init_range and not is_init_boundaries then
+    if is_init_channels and not is_init_boundaries then
+        range_step = RC_RANGE / #control_band
 		gcs:send_text(6, "6 : Create boundaries table ... ")
 		gcs:send_text(6, " ")
 		gcs:send_text(6, " - - - - - - - - - - - - - - - -")
-		for i, freq in ipairs(frequencies) do
+		for i, val in ipairs(control_band) do
 			lower_bound = 990 + (i - 1) * math.floor(range_step)
 			upper_bound = lower_bound + math.floor(range_step)
 
-			table.insert(boundaries, {lower = lower_bound, upper = upper_bound})
-			gcs:send_text(6, i .. " - " .. lower_bound .. ", " .. upper_bound .. " - " .. freq .." Hz;")
+			table.insert(boundaries, {lower = lower_bound, upper = upper_bound, band = val.band, channel = val.channel})
+			gcs:send_text(6, i .. " - " .. lower_bound .. ", " .. upper_bound .. " - CHANNEL: " .. band_names[val.band] .. "" ..val.channel)
 		end
 		gcs:send_text(6, " - - - - - - - - - - - - - - - -")
 		gcs:send_text(6, " ")
