@@ -92,7 +92,7 @@ local function loop()
                 freq = VIDEO_CHANNELS[BAND][CHANNEL]
                 local curr_freq = param:get(VTX_FREQ)
                 if curr_freq ~= freq then
-                    gcs:send_text(6, "Current VTX CHANNEL: " .. band_names[BAND] .. CHANNEL)
+                    gcs:send_text(6, string.format("Current VTX CHANNEL: %s%d", band_names[BAND], CHANNEL))
                     param:set(VTX_FREQ, freq)
                     break
                 end
@@ -107,7 +107,7 @@ local function loop()
 			if PWR_RC_channel_value >= range.lower and PWR_RC_channel_value <= range.upper then
 				if range.value ~= pwr_value then
 					pwr_value = range.value
-					gcs:send_text(6, "Current VTX power: " .. pwr_value)
+					gcs:send_text(6, string.format("Current VTX power: %d", pwr_value))
 					param:set(VTX_POWER, pwr_value)
 					break
 				end
@@ -125,10 +125,8 @@ local function init()
 	-- add param table
 
 	if not is_add_param_table then
-		gcs:send_text(6, " - * - * - * - * - * - * - * - * - * - * - * - ")
-		gcs:send_text(6, " ")
-		gcs:send_text(6, "0 : Initialize VTX control")
-		gcs:send_text(6, " ")
+		gcs:send_text(6, " - * - * - * - * - * - * - * - * - * - * - * - \n ")
+		gcs:send_text(6, "0 : Initialize VTX control\n ")
 
 		assert(param:add_table(TABLE_KEY, TABLE_PREFIX, 6), "The parameter table wasn`t created")
 		param:add_param(TABLE_KEY, 1, PARAMS.CHANGE_ENABLE, 0)
@@ -147,8 +145,7 @@ local function init()
 	if not is_enable then
 		local enable = param:get(TABLE_PREFIX .. PARAMS.CHANGE_ENABLE) or 0
 		if enable == 1 then
-			gcs:send_text(6, "1 : VTX control enable!")
-			gcs:send_text(6, " ")
+			gcs:send_text(6, "1 : VTX control enable!\n ")
 			is_enable = true
 			return init, 100
 		end
@@ -157,8 +154,7 @@ local function init()
 			count = count + 1
 			return init, 100
 		elseif enable == 0 and count >= 5 then
-			gcs:send_text(6, "1 : VTX control disabled!")
-			gcs:send_text(6, " ")
+			gcs:send_text(6, "1 : VTX control disabled!\n ")
 			return
 		end
 		return init, 100
@@ -168,28 +164,24 @@ local function init()
 	if is_enable and not is_init_CH_RC_channel then
 		CH_RC_channel = param:get(TABLE_PREFIX .. PARAMS.CHANNEL_RC) or nil
 		if CH_RC_channel ~= nil or CH_RC_channel > 5 then
-			gcs:send_text(6, "2 : Set CHANNEL RC channel ... " .. CH_RC_channel)
-			gcs:send_text(6, "2 : Done!")
-			gcs:send_text(6, " ")
+			gcs:send_text(6, string.format("2 : Set CHANNEL RC channel %d", CH_RC_channel))
+			gcs:send_text(6, "2 : Done!\n ")
 			is_init_CH_RC_channel = true
 			return init, 100
 		end
-		gcs:send_text(6, "2 : VTX CHANNEL RC channel not found!")
-		gcs:send_text(6, " ")
+		gcs:send_text(6, "2 : VTX CHANNEL RC channel not found!\n ")
 	end
 
 	-- set POWER RC channel
 	if is_enable and not is_init_PWR_RC_channel then
 		PWR_RC_channel = param:get(TABLE_PREFIX .. PARAMS.POWER_RC) or nil
 		if PW_RC_channel ~= nil or PWR_RC_channel > 5 then
-			gcs:send_text(6, "3 : Set POWER RC channel ... " .. PWR_RC_channel)
-			gcs:send_text(6, "3 : Done!")
-			gcs:send_text(6, " ")
+			gcs:send_text(6, string.format("3 : Set POWER RC channel %d", PWR_RC_channel))
+			gcs:send_text(6, "3 : Done!\n ")
 			is_init_PWR_RC_channel = true
 			return init, 100
 		end
-		gcs:send_text(6, "3 : VTX POWER RC channel not found!")
-		gcs:send_text(6, " ")
+		gcs:send_text(6, "3 : VTX POWER RC channel not found! \n ")
 	end
 
     -- set CHANNEL table
@@ -207,22 +199,20 @@ local function init()
                 local channel = tonumber(control1_string:sub(i,i))
                 if channel then
                     table.insert(control_band, {lower = lower_bound, upper = upper_bound, band = band, channel = channel})
-                    gcs:send_text(6, i .. " - " .. lower_bound .. ", " .. upper_bound .. " - CHANNEL: " .. band .. "" ..channel)
+                    gcs:send_text(6, string.format("%d - %d, %d - CHANNEL: %s%d", count, lower_bound, upper_bound, band, channel))
                 end
                 count = count + 1
             end
         end
     
         if #control_band ~= 0 then
-            gcs:send_text(6, " - - - - - - - - - - - - - - - -")
-            gcs:send_text(6, " ")
-            gcs:send_text(6, "5 : Done!")
-            gcs:send_text(6, " ")
+            gcs:send_text(6, " - - - - - - - - - - - - - - - - \n ")
+            gcs:send_text(6, "5 : Done!\n ")
             is_init_channels = true
             return init, 100
         end
     
-        gcs:send_text(6, "5 : VTX  CHANNELS not found! ")
+        gcs:send_text(6, "5 : VTX  CHANNELS not found! \n ")
     end
 
 	-- set POWER RC range
@@ -235,21 +225,18 @@ local function init()
 		local max = param:get(TABLE_PREFIX .. "MAX_POWER") or 25
 		local pwr_values = {min, av, max}
 		local step = RC_RANGE / 3
-		gcs:send_text(6, "7: Set POWER RC range ... ")
-		gcs:send_text(6, " ")
+		gcs:send_text(6, "7: Set POWER RC range ...\n ")
 		gcs:send_text(6, " - - - - - - - - - - - - - - - -")
 		
 		for i = 1, 3 do
 			lower = RC_MIN + (i - 1) * math.floor(step)
 			upper = lower + math.floor(step)
 			table.insert(pwr_ranges, {lower = lower, upper = upper, value = pwr_values[i]})
-			gcs:send_text(6, pwr_values[i] .. "mW" .. " - " .. lower .. ", " .. upper .. " ;")
+			gcs:send_text(6,  string.format("%dmW - %d, %d;", pwr_values[i], lower, upper))
 		end
 
-		gcs:send_text(6, " - - - - - - - - - - - - - - - -")
-		gcs:send_text(6, " ")
-		gcs:send_text(6, "7 : Done!")
-		gcs:send_text(6, " ")
+		gcs:send_text(6, " - - - - - - - - - - - - - - - - \n ")
+		gcs:send_text(6, "7 : Done!\n ")
 		is_power_range = true
 		return init, 100
 	end
@@ -257,11 +244,10 @@ local function init()
 	-- init complete
 	if (is_init_channels or is_power_range) and not is_init then
 		is_init = true
-		gcs:send_text(6, "Initialize boundaries: " .. tostring(is_init_channels) .. ";")
-		gcs:send_text(6, "Initialize power ranges: " .. tostring(is_power_range) .. ";")
+		gcs:send_text(6, string.format("Initialize boundaries: %q;",is_init_channels))
+		gcs:send_text(6, string.format("Initialize power ranges: %q;", is_power_range))
 		gcs:send_text(6, "Initialize complete!!!")
-		gcs:send_text(6, " - * - * - * - * - * - * - * - * - * - * - * - ")
-		gcs:send_text(6, " ")
+		gcs:send_text(6, " - * - * - * - * - * - * - * - * - * - * - * -  \n ")
 		return loop, LOOP_INTERVAL
 	end
 
