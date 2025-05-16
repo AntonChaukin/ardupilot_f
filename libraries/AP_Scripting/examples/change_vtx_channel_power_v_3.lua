@@ -22,9 +22,8 @@ local TABLE_KEY = 51
 local TABLE_PREFIX = "VTX_"
 local LOOP_INTERVAL = 200
 local VTX_FREQ = "VTX_FREQ"
-local VTX_BAND = "VTX_BAND"
-local VTX_CHANNEL = "VTX_CHANNEL"
 local VTX_POWER = "VTX_POWER"
+local RC_MIN = 990
 local RC_RANGE = 1025
 local CH_RC_channel = nil
 local CH_RC_channel_value = 0
@@ -44,12 +43,9 @@ local is_add_param_table = false
 local is_enable = false
 local is_init_CH_RC_channel = false
 local is_init_PWR_RC_channel = false
-local is_init_boundaries = false
 local is_power_range = false
 local is_init = false
-local count = 0
 local control_band = {}
-local boundaries = {}
 local pwr_ranges = {}
 local band_names = {"A","B","E","F","R","L","1G3_A","1G3_B","X","3G3_A","3G3_B"}
 local PARAMS = {
@@ -82,7 +78,7 @@ local function loop()
 
 	if prev_CH_RC_channel_value ~= CH_RC_channel_value then
 		prev_CH_RC_channel_value = CH_RC_channel_value
-		for _, val in ipairs(boundaries) do
+		for _, val in ipairs(control_band) do
 
 			if CH_RC_channel_value > val.lower and CH_RC_channel_value <= val.upper then
 				if val.band ~= BAND then
@@ -94,7 +90,7 @@ local function loop()
 				end
 
                 freq = VIDEO_CHANNELS[BAND][CHANNEL]
-                local curr_freq = param:get(TABLE_PREFIX .. VTX_FREQ)
+                local curr_freq = param:get(VTX_FREQ)
                 if curr_freq ~= freq then
                     gcs:send_text(6, "Current VTX CHANNEL: " .. band_names[BAND] .. CHANNEL)
                     param:set(VTX_FREQ, freq)
@@ -172,13 +168,13 @@ local function init()
 	if is_enable and not is_init_CH_RC_channel then
 		CH_RC_channel = param:get(TABLE_PREFIX .. PARAMS.CHANNEL_RC) or nil
 		if CH_RC_channel ~= nil or CH_RC_channel > 5 then
-			gcs:send_text(6, "3 : Set CHANNEL RC channel ... " .. CH_RC_channel)
-			gcs:send_text(6, "3 : Done!")
+			gcs:send_text(6, "2 : Set CHANNEL RC channel ... " .. CH_RC_channel)
+			gcs:send_text(6, "2 : Done!")
 			gcs:send_text(6, " ")
 			is_init_CH_RC_channel = true
 			return init, 100
 		end
-		gcs:send_text(6, "3 : VTX CHANNEL RC channel not found!")
+		gcs:send_text(6, "2 : VTX CHANNEL RC channel not found!")
 		gcs:send_text(6, " ")
 	end
 
@@ -186,13 +182,13 @@ local function init()
 	if is_enable and not is_init_PWR_RC_channel then
 		PWR_RC_channel = param:get(TABLE_PREFIX .. PARAMS.POWER_RC) or nil
 		if PW_RC_channel ~= nil or PWR_RC_channel > 5 then
-			gcs:send_text(6, "4 : Set POWER RC channel ... " .. PWR_RC_channel)
-			gcs:send_text(6, "4 : Done!")
+			gcs:send_text(6, "3 : Set POWER RC channel ... " .. PWR_RC_channel)
+			gcs:send_text(6, "3 : Done!")
 			gcs:send_text(6, " ")
 			is_init_PWR_RC_channel = true
 			return init, 100
 		end
-		gcs:send_text(6, "4 : VTX POWER RC channel not found!")
+		gcs:send_text(6, "3 : VTX POWER RC channel not found!")
 		gcs:send_text(6, " ")
 	end
 
@@ -201,17 +197,25 @@ local function init()
         gcs:send_text(6, "5 : Set CHANNEL table ... ")
         local control1 = param:get(TABLE_PREFIX .. PARAMS.CONTROL1) or 0
         local control1_string = tostring(control1)
-        local index = 0
-        
-        for i = 1, #control1_string, 2 do
-           local band = tonumber(control1_string:sub(i,i)) 
-           local channel = tonumber(control1_string:sub(i,i))
-           if channel then
-              table.insert(control_band, {band = band, channel = channel}) 
-           end
+        if #control1_string > 1 then
+            local count = 0
+            range_step = RC_RANGE / math.floor(#control1_string / 2)
+            for i = 1, #control1_string, 2 do
+                lower_bound = RC_MIN + (count) * math.floor(range_step)
+                upper_bound = lower_bound + math.floor(range_step)
+                local band = tonumber(control1_string:sub(i,i))
+                local channel = tonumber(control1_string:sub(i,i))
+                if channel then
+                    table.insert(control_band, {lower = lower_bound, upper = upper_bound, band = band, channel = channel})
+                    gcs:send_text(6, i .. " - " .. lower_bound .. ", " .. upper_bound .. " - CHANNEL: " .. band .. "" ..channel)
+                end
+                count = count + 1
+            end
         end
     
         if #control_band ~= 0 then
+            gcs:send_text(6, " - - - - - - - - - - - - - - - -")
+            gcs:send_text(6, " ")
             gcs:send_text(6, "5 : Done!")
             gcs:send_text(6, " ")
             is_init_channels = true
@@ -220,27 +224,6 @@ local function init()
     
         gcs:send_text(6, "5 : VTX  CHANNELS not found! ")
     end
-
-	-- create boundaries table
-    if is_init_channels and not is_init_boundaries then
-        range_step = RC_RANGE / #control_band
-		gcs:send_text(6, "6 : Create boundaries table ... ")
-		gcs:send_text(6, " ")
-		gcs:send_text(6, " - - - - - - - - - - - - - - - -")
-		for i, val in ipairs(control_band) do
-			lower_bound = 990 + (i - 1) * math.floor(range_step)
-			upper_bound = lower_bound + math.floor(range_step)
-
-			table.insert(boundaries, {lower = lower_bound, upper = upper_bound, band = val.band, channel = val.channel})
-			gcs:send_text(6, i .. " - " .. lower_bound .. ", " .. upper_bound .. " - CHANNEL: " .. band_names[val.band] .. "" ..val.channel)
-		end
-		gcs:send_text(6, " - - - - - - - - - - - - - - - -")
-		gcs:send_text(6, " ")
-		gcs:send_text(6, "6 : Done!")
-		gcs:send_text(6, " ")
-		is_init_boundaries = true
-		return init, 100
-	end
 
 	-- set POWER RC range
 	if is_init_PWR_RC_channel and not is_power_range then
@@ -257,7 +240,7 @@ local function init()
 		gcs:send_text(6, " - - - - - - - - - - - - - - - -")
 		
 		for i = 1, 3 do
-			lower = 990 + (i - 1) * math.floor(step)
+			lower = RC_MIN + (i - 1) * math.floor(step)
 			upper = lower + math.floor(step)
 			table.insert(pwr_ranges, {lower = lower, upper = upper, value = pwr_values[i]})
 			gcs:send_text(6, pwr_values[i] .. "mW" .. " - " .. lower .. ", " .. upper .. " ;")
@@ -272,9 +255,9 @@ local function init()
 	end
 
 	-- init complete
-	if (is_init_boundaries or is_power_range) and not is_init then
+	if (is_init_channels or is_power_range) and not is_init then
 		is_init = true
-		gcs:send_text(6, "Initialize boundaries: " .. tostring(is_init_boundaries) .. ";")
+		gcs:send_text(6, "Initialize boundaries: " .. tostring(is_init_channels) .. ";")
 		gcs:send_text(6, "Initialize power ranges: " .. tostring(is_power_range) .. ";")
 		gcs:send_text(6, "Initialize complete!!!")
 		gcs:send_text(6, " - * - * - * - * - * - * - * - * - * - * - * - ")
