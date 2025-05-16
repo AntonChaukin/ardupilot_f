@@ -38,6 +38,7 @@ local upper_bound = 0
 local freq = 0
 local BAND = 0
 local CHANNEL = 0
+local count = 0
 local is_init_channels = false
 local is_add_param_table = false
 local is_enable = false
@@ -190,18 +191,18 @@ local function init()
         local control1 = param:get(TABLE_PREFIX .. PARAMS.CONTROL1) or 0
         local control1_string = tostring(control1)
         if #control1_string > 1 then
-            local count = 0
+            local index = 0
             range_step = RC_RANGE / math.floor(#control1_string / 2)
             for i = 1, #control1_string, 2 do
-                lower_bound = RC_MIN + (count) * math.floor(range_step)
+                lower_bound = RC_MIN + (index) * math.floor(range_step)
                 upper_bound = lower_bound + math.floor(range_step)
                 local band = tonumber(control1_string:sub(i,i))
-                local channel = tonumber(control1_string:sub(i,i))
+                local channel = tonumber(control1_string:sub(i+1,i+1))
                 if channel then
                     table.insert(control_band, {lower = lower_bound, upper = upper_bound, band = band, channel = channel})
-                    gcs:send_text(6, string.format("%d - %d, %d - CHANNEL: %s%d", count, lower_bound, upper_bound, band, channel))
+                    gcs:send_text(6, string.format("%d - %d, %d - CHANNEL: %s%d", index, lower_bound, upper_bound, band_names[band], channel))
                 end
-                count = count + 1
+                index = index + 1
             end
         end
     
