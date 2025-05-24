@@ -34,6 +34,13 @@ EK3_SRC1_VELZ 0
 EK3_SRC1_YAW 6
 #Flightmode channel
 FLTMODE_CH 6
+# Flight mode when pwm of Flightmode channel PosHold, AltHold, Stabilize
+FLTMODE1 16
+FLTMODE2 16
+FLTMODE3 2
+FLTMODE4 2
+FLTMODE5 0
+FLTMODE6 0
 #Frame Class Quad
 FRAME_CLASS 1
 #Frame Type BetaFlightXReversed
@@ -46,12 +53,36 @@ FS_GCS_ENABLE 0
 FS_OPTIONS 1
 #1st GPS type None
 GPS_TYPE 0
+#Gyro filter cutoff frequency
+INS_GYRO_FILTER 43
+# Harmonic Notch Filter
+INS_HNTCH_ATT 40
+INS_HNTCH_BW 25
+INS_HNTCH_ENABLE 0
+INS_HNTCH_FM_RAT 1
+INS_HNTCH_FREQ 80
+INS_HNTCH_HMNCS 7
+INS_HNTCH_MODE 3
+INS_HNTCH_OPTS 6
+INS_HNTCH_REF 1
+# Bitmap of which IMUs to log batch data for IMU1
+INS_LOG_BAT_MASK 1
+# Batch Logging Options Mask 
+# Sensor-Rate Logging (sample at full sensor rate seen by AP)
+# Sample pre- and post-filter
+INS_LOG_BAT_OPT 5
+# Raw logging options bitmask Log primary gyro only, Pre and post filter
+INS_RAW_LOG_OPT 9
 #Mount default operating mode RC Targeting
 MNT1_DEFLT_MODE 3
 #Mount Type Servo
 MNT1_TYPE 1
 #Maximum current over which maximum throttle is limited
 MOT_BAT_CURR_MAX 18
+# Enable/Disable automatic learning of hover throttle Learn and Save
+MOT_HOVER_LEARN 2
+# This selects the output PWM type DShot300
+MOT_PWM_TYPE 5
 #Motor Spin maximum Low
 MOT_SPIN_MAX 0.9
 #PosHold braking angle max
@@ -68,9 +99,58 @@ RC_FS_TIMEOUT 5
 RC_OPTIONS 5
 # RC protocols enabled
 RC_PROTOCOLS 1
-# SERIAL3 is RCIN by default
+# Function assigned to this RC channel Relay2 On/Off
+RC11_OPTION 34
+# Reversed RC channel
+RC2_REVERSED 1
+# Function assigned to this RC channel ArmDisarm
+RC5_OPTION 153
+# Function assigned to this RC channel Mount1 Pitch
+RC8_OPTION 213
+# The function the relay channel is mapped to Relay
+RELAY2_FUNCTION 1
+# Digital pin number for relay control Cameras switch
+RELAY2_PIN 82
+# Mask of channels which support ESC rpm telemetry: channels 1-4
+RPM1_ESC_MASK 15
+# What type of RPM sensor is connected ESC Telemetry Motors Bitmask
+RPM1_TYPE 5
+# Radio Receiver RSSI type ReceiverProtocol
+RSSI_TYPE 3
+# The minimum alt above home the vehicle will climb to before returning
+RTL_ALT 5000
+# This is the altitude the vehicle will move to as the final stage of Returning to Launch
+RTL_ALT_FINAL 0
+# RTL altitude type Relative to Home
+RTL_ALT_TYPE 0
+# Options that can be applied to change RTL mode behaviour
+RTL_OPTIONS 0
+# Defines the speed in cm/s which the aircraft will attempt to maintain horizontally while flying home
+RTL_SPEED 50
+# Controls if scripting is enabled Lua Scripts
+SCR_ENABLE 1
+# SERIAL1 for MAVLink
+SERIAL1_BAUD 230
+SERIAL1_PROTOCOL 2
+# SERIAL3 for RCIN
 SERIAL3_PROTOCOL 23
 SERIAL3_BAUD 115
-# SERIAL6 is IRC TRAMP by default
+# SERIAL5 for ESC Telemetry
+SERIAL5_BAUD 115
+SERIAL5_PROTOCOL 16
+# SERIAL6 for IRC TRAMP
 SERIAL6_PROTOCOL 44
 SERIAL6_BAUD 9
+SERIAL6_OPTIONS 4
+# Mask of channels which support bi-directional dshot: channels 1-4
+SERVO_BLH_BDMASK 15
+# Servo DShot ESC type BLHeli32/Kiss
+SERVO_DSHOT_ESC 1
+# Visual odometry camera connection type MAVLink
+VISO_TYPE 1
+# Toggles the Video Transmitter on and off
+VTX_ENABLE 1
+# Video Transmitter Options Unlocked
+VTX_OPTIONS 8
+# Waypoint Climb Speed Target
+WPNAV_SPEED_UP 50
