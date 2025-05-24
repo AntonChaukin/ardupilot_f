@@ -1,3 +1,76 @@
-# SERIAL7 is RCIN by default
-SERIAL7_PROTOCOL 23
-SERIAL7_BAUD 115
+#do not use GPS to control ANRS
+AHRS_GPS_USE 0
+#do not verify prearm periphery
+ARMING_CHECK 0
+#Angular Velocity Max for Pitch
+ATC_RATE_P_MAX 120
+#Angular Velocity Max for Roll
+ATC_RATE_R_MAX 120
+#Required arming voltage
+BATT_ARM_VOLT 20
+#Critical battery voltage
+BATT_CRT_VOLT 16.8
+#Critical battery failsafe action LAND
+BATT_FS_CRT_ACT 1
+#Low battery voltage
+BATT_LOW_VOLT 19.8
+#
+COMPASS_ENABLE 0
+#upper DISARM_DELAY to 20 seconds
+DISARM_DELAY 20
+#Accelerometer noise (m/s^2)
+EK3_ACC_P_NSE 0.9
+#Bitmask of active IMUs
+EK3_IMU_MASK 1
+#Position Horizontal Source (Primary) ExternalNav
+EK3_SRC1_POSXY 6
+#Position Vertical Source Baro
+EK3_SRC1_POSZ 1
+#Velocity Horizontal Source ExternalNav
+EK3_SRC1_VELXY 6
+#Velocity Vertical Source Disabled
+EK3_SRC1_VELZ 0
+#Yaw Source ExternalNav
+EK3_SRC1_YAW 6
+#Flightmode channel
+FLTMODE_CH 6
+#Frame Class Quad
+FRAME_CLASS 1
+#Frame Type BetaFlightXReversed
+FRAME_TYPE 18
+#EKF Failsafe Action AltHold
+FS_EKF_ACTION 2
+#Ground Station Failsafe Disabled
+FS_GCS_ENABLE 0
+#Failsafe options Continue if in Auto on RC failsafe only
+FS_OPTIONS 1
+#1st GPS type None
+GPS_TYPE 0
+#Mount default operating mode RC Targeting
+MNT1_DEFLT_MODE 3
+#Mount Type Servo
+MNT1_TYPE 1
+#Maximum current over which maximum throttle is limited
+MOT_BAT_CURR_MAX 18
+#Motor Spin maximum Low
+MOT_SPIN_MAX 0.9
+#PosHold braking angle max
+PHLD_BRAKE_ANGLE 2400
+#PosHold flight mode's rotation rate during braking in deg/sec
+PHLD_BRAKE_RATE 8
+#Velocity (vertical) controller I gain
+PSC_VELZ_I 1
+#Velocity (vertical) controller P gain
+PSC_VELZ_P 2
+#RC failsafe will trigger this many seconds after loss of RC
+RC_FS_TIMEOUT 5
+#RC input options Arming check throttle for 0 input
+RC_OPTIONS 5
+# RC protocols enabled
+RC_PROTOCOLS 1
+# SERIAL3 is RCIN by default
+SERIAL3_PROTOCOL 23
+SERIAL3_BAUD 115
+# SERIAL6 is IRC TRAMP by default
+SERIAL6_PROTOCOL 44
+SERIAL6_BAUD 9

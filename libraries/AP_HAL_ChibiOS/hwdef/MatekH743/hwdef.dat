@@ -223,3 +223,6 @@ ROMFS_WILDCARD libraries/AP_OSD/fonts/font*.bin
 
 # build ABIN for flash-from-bootloader support:
 env BUILD_ABIN True
+
+# define TRAMP_DEBUG 1
+define AP_TRAMP_ENABLED 1
