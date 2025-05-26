@@ -143,7 +143,7 @@ local function init()
     -- add param table
 	if not is_add_param_table then
 		gcs:send_text(6, " - * - * - * - * - * - * - * - * - * - * - * - \n ")
-		gcs:send_text(6, string.format("%d : Initialize VTX control\n "), message_index)
+		gcs:send_text(6, string.format("%d : Initialize VTX control\n ", message_index))
         
         local is_param_added = param:get(TABLE_PREFIX .. PARAMS.CHANGE_ENABLE)
 
@@ -193,7 +193,7 @@ local function init()
         for _, rc in ipairs(PARAMS.RCS) do
             local RC_channel = param:get(TABLE_PREFIX .. rc.name) or 0
             if RC_channel > 5 and RC_channel <= 15 then
-                gcs:send_text(6, string.format("%d : Set CHANNEL RC channel: %d", message_index, RC_channel))
+                gcs:send_text(6, string.format("%d : Set %s%s channel: %d", message_index, TABLE_PREFIX, rc.name, RC_channel))
                 gcs:send_text(6, string.format("%d : Done!\n ", message_index))
                 rc.channel = RC_channel
                 rc.is_enable = true
