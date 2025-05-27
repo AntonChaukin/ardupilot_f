@@ -26,6 +26,8 @@ local VTX_MAX_POWER = "VTX_MAX_POWER"
 local VTX_POWER = "VTX_POWER"
 local VTX_OPTIONS = "VTX_OPTIONS"
 local vtx_band = 0
+local freq = 0
+local is_pitmode = false
 local RC_RANGE = 1025
 local RC_MIN = 989
 local range_step = math.floor(RC_RANGE / 3)
@@ -79,27 +81,37 @@ local function get_current(RC_index, curr_RC_channel_value)
                 PARAMS.RCS[RC_index].curr = item.value
                 if RC_index == 1 then
                     gcs:send_text(6, "Current VTX BAND: " .. band_names[PARAMS.RCS[RC_index].curr])
+                    frequencies = VIDEO_CHANNELS[PARAMS.RCS[1].curr]
+                    gcs:send_text(6, "Current VTX freq: " .. frequencies[PARAMS.RCS[RC_index].curr])
+                    param:set(VTX_FREQ, frequencies[PARAMS.RCS[RC_index].curr])
                 elseif RC_index == 2 then
-                    if PARAMS.RCS[1].curr ~= vtx_band then
+                    if PARAMS.RCS[1].is_enable and PARAMS.RCS[1].curr ~= vtx_band then
                         vtx_band = PARAMS.RCS[1].curr
                         frequencies = VIDEO_CHANNELS[vtx_band]
                     end
-                    gcs:send_text(6, "Current VTX freq: " .. frequencies[PARAMS.RCS[RC_index].curr])
-                    param:set(VTX_FREQ, frequencies[PARAMS.RCS[RC_index].curr])
-                elseif RC_index == 3 then
+                    local curr_freq = frequencies[PARAMS.RCS[RC_index].curr]
+                    if freq ~= curr_freq then
+                        freq = curr_freq
+                        gcs:send_text(6, "Current VTX freq: " .. frequencies[PARAMS.RCS[RC_index].curr])
+                        param:set(VTX_FREQ, frequencies[PARAMS.RCS[RC_index].curr])
+                    end
+                elseif RC_index == 3 and not is_pitmode then
                     gcs:send_text(6, string.format("Current VTX POWER: %dmW", PARAMS.RCS[RC_index].curr))
                     param:set(VTX_POWER, PARAMS.RCS[RC_index].curr)
                 elseif RC_index == 4 then
+                    local pwr_value = PARAMS.RCS[3].curr
+                    if not pwr_value then
+                        pwr_value = param:get(VTX_POWER)
+                        PARAMS.RCS[3].curr = pwr_value
+                    end
                     gcs:send_text(6, "Current " .. PARAMS.RCS[RC_index].curr)
                     if i == 2 then
+                        is_pitmode = true
                         param:set(VTX_OPTIONS, 9)
                         param:set(VTX_POWER, 0)
                     elseif i == 1 then
-                        local pwr_value = PARAMS.RCS[3].curr
-                        if not pwr_value then
-                            pwr_value = param:get(VTX_POWER)
-                        end
                         gcs:send_text(6, string.format("Current VTX POWER: %dmW", pwr_value))
+                        is_pitmode = false
                         param:set(VTX_OPTIONS, 8)
                         param:set(VTX_POWER, pwr_value)
                     end    
@@ -214,7 +226,7 @@ local function init()
     end
     
     -- set BAND
-    if (PARAMS.RCS[1].is_enable and PARAMS.RCS[2].is_enable) and not is_init_BAND then
+    if PARAMS.RCS[2].is_enable and not is_init_BAND then
         local bands = param:get(TABLE_PREFIX .. PARAMS.BAND_CSTM) or 0
         
         if not PARAMS.RCS[1].is_enable then
@@ -271,6 +283,7 @@ local function init()
             gcs:send_text(6, string.format("%d - %d, %d;", i, lower_bound, upper_bound))
         end
         gcs:send_text(6, " - - - - - - - - - - - - - - - -\n ")
+        frequencies = VIDEO_CHANNELS[PARAMS.RCS[1].curr]
         local curr_RC_channel_value = rc:get_pwm(PARAMS.RCS[2].channel)
         get_current(2, curr_RC_channel_value)
         gcs:send_text(6, string.format("%d : Done!\n ", message_index))
