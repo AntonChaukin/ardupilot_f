@@ -19,6 +19,7 @@ local TABLE_PREFIX = "VTX_"
 local LOOP_INTERVAL = 200
 local VTX_FREQ = "VTX_FREQ"
 local VTX_POWER = "VTX_POWER"
+local VTX_OPTIONS = "VTX_OPTIONS"
 local RC_RANGE = 1010
 local pm_step = RC_RANGE / 3
 local RC_channel = nil
@@ -91,10 +92,12 @@ local function loop()
 			end
 			if PM_RC_channel_value > (990 + math.floor(pm_step)) and RC_channel_value <= (990 + RC_RANGE) then
 				gcs:send_text(6, "Activate PitMode")
+				param:set(VTX_OPTIONS, 9)
 				param:set(VTX_POWER, 0)
 			elseif PM_RC_channel_value > 980 and PM_RC_channel_value <= (990 + math.floor(pm_step)) then
 				gcs:send_text(6, "Deactivate PitMode")
 				gcs:send_text(6, "Current VTX power: " .. pwr_value)
+				param:set(VTX_OPTIONS, 8)
 				param:set(VTX_POWER, pwr_value)
 			end
 		end

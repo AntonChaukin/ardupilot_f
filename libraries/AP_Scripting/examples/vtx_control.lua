@@ -24,6 +24,7 @@ local VTX_BAND = "VTX_BAND"
 local VTX_FREQ = "VTX_FREQ"
 local VTX_MAX_POWER = "VTX_MAX_POWER"
 local VTX_POWER = "VTX_POWER"
+local VTX_OPTIONS = "VTX_OPTIONS"
 local vtx_band = 0
 local RC_RANGE = 1025
 local RC_MIN = 989
@@ -89,12 +90,18 @@ local function get_current(RC_index, curr_RC_channel_value)
                     gcs:send_text(6, string.format("Current VTX POWER: %dmW", PARAMS.RCS[RC_index].curr))
                     param:set(VTX_POWER, PARAMS.RCS[RC_index].curr)
                 elseif RC_index == 4 then
-                    gcs:send_text(6, "Current" .. PARAMS.RCS[RC_index].curr)
+                    gcs:send_text(6, "Current " .. PARAMS.RCS[RC_index].curr)
                     if i == 2 then
+                        param:set(VTX_OPTIONS, 9)
                         param:set(VTX_POWER, 0)
                     elseif i == 1 then
-                        gcs:send_text(6, string.format("Current VTX POWER: %dmW", PARAMS.RCS[3].curr))
-                        param:set(VTX_POWER, PARAMS.RCS[3].curr)
+                        local pwr_value = PARAMS.RCS[3].curr
+                        if not pwr_value then
+                            pwr_value = param:get(VTX_POWER)
+                        end
+                        gcs:send_text(6, string.format("Current VTX POWER: %dmW", pwr_value))
+                        param:set(VTX_OPTIONS, 8)
+                        param:set(VTX_POWER, pwr_value)
                     end    
                 end
             end
@@ -107,8 +114,8 @@ end
 local function loop()
     
     -- get BAND, CHANNEL, POWER, PITMODE
-    for i, rc in ipairs(PARAMS.RCS) do
-        if rc.is_enable then
+    for i, _ in ipairs(PARAMS.RCS) do
+        if PARAMS.RCS[i].is_enable then
             local curr_RC_channel_value = rc:get_pwm(PARAMS.RCS[i].channel)
             local curr_index = PARAMS.RCS[i].curr_index
             if curr_RC_channel_value < PARAMS.RCS[i].boundaries[curr_index].lower
