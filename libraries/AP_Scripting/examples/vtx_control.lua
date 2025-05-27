@@ -210,7 +210,7 @@ local function init()
     end
     
     -- set BAND
-    if PARAMS.RCS[1].is_enable and not is_init_BAND then
+    if (PARAMS.RCS[1].is_enable and PARAMS.RCS[2].is_enable) and not is_init_BAND then
         local bands = param:get(TABLE_PREFIX .. PARAMS.BAND_CSTM) or 0
         
         if not PARAMS.RCS[1].is_enable then
@@ -219,8 +219,15 @@ local function init()
         end
         
         local bands_string = tostring(math.floor(bands))
+        local bands_table = {}
+        for i = 1, #bands_string do
+            local _band = tonumber(bands_string:sub(i,i))
+            if _band > 0 then
+                table.insert(bands_table, _band)
+            end
+        end 
         
-        if #bands_string < 2 and #bands_string > 3 then
+        if #bands_table < 2 or #bands_table > 3 then
             PARAMS.RCS[1].curr =  init_band(bands)
             PARAMS.RCS[1].is_enable = false
             return init, 100
@@ -229,11 +236,11 @@ local function init()
         gcs:send_text(6, string.format("%d : Set VTX BANDS RC range\n ", message_index))
         gcs:send_text(6, " - - - - - - - - - - - - - - - -")
         for i = 1, 3 do
-            local band = tonumber(bands_string:sub(i,i))
+            local band = bands_table[i]
             lower_bound = 990 + (i - 1) * range_step
             upper_bound = lower_bound + range_step
             if not band then
-                band = tonumber(bands_string:sub(i - 1,i - 1))
+                band = bands_table[i-1]
             end
             table.insert(PARAMS.RCS[1].boundaries, {lower = lower_bound, upper = upper_bound, value = band})
             gcs:send_text(6, string.format("%d - %d, %d - %s", i, lower_bound, upper_bound, band_names[band]))
@@ -311,6 +318,9 @@ local function init()
     end
     
 	if is_init_RC_channel then
+        if not PARAMS.RCS[2].is_enable then
+            PARAMS.RCS[1].is_enable = false
+        end
         for _, rc in ipairs(PARAMS.RCS) do
             if rc.is_enable then
                 gcs:send_text(6, string.format("Initialize %s%s: %d", TABLE_PREFIX, rc.name, rc.channel))
