@@ -83,7 +83,7 @@
 
 const AP_HAL::HAL& hal = AP_HAL::get_HAL();
 
-#define SCHED_TASK(func, _interval_ticks, _max_time_micros, _prio) SCHED_TASK_CLASS(Copter, &copter, func, _interval_ticks, _max_time_micros, _prio)
+#define SCHED_TASK(func, rate_hz, _max_time_micros, _prio) SCHED_TASK_CLASS(Copter, &copter, func, rate_hz, _max_time_micros, _prio)
 #define FAST_TASK(func) FAST_TASK_CLASS(Copter, &copter, func)
 
 /*
@@ -894,7 +894,7 @@ void Copter::update_super_simple_bearing(bool force_update)
     }
 
     super_simple_last_bearing = bearing;
-    const float angle_rad = radians((super_simple_last_bearing+18000)*0.01f);
+    const float angle_rad = cd_to_rad(super_simple_last_bearing + 18000);
     super_simple_cos_yaw = cosf(angle_rad);
     super_simple_sin_yaw = sinf(angle_rad);
 }
